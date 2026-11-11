@@ -1,0 +1,14 @@
+{
+  "algol68.tar.gz": {
+    "url": "https://www.tuhs.org/Archive/Applications/Algol_68/algol68.tar.gz",
+    "sha256": "f07255a33c0fd67bdb2932a4dad2d2382e462c2338e8b314e5b8e216e2e9eed1"
+  },
+  "apout.tar.gz": {
+    "url": "https://codeload.github.com/DoctorWkt/Apout/tar.gz/e88a446ace064f5a41e1a47d9ae8278b83b27a20",
+    "sha256": "9dcb9c8c5d35dd7ed0b04d1a927f36bb4deb0bd0082809f52f4d81638bfcb39a"
+  },
+  "bsd-root.afio.gz": {
+    "url": "https://www.tuhs.org/Archive/Distributions/UCB/2BSD/2.11BSD/root.afio.gz",
+    "sha256": "1746e10de8372b92518bf15a7be927a6e1fe5ba89133d261668ffd26af97fbde"
+  }
+}

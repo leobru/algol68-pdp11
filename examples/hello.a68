@@ -1,0 +1,1 @@
+BEGIN print("Hello from PDP-11 Algol 68S!"); newline; print(6 * 7); newline END

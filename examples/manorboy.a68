@@ -1,0 +1,8 @@
+(
+  PROC a = (INT in k, PROC INT x1, x2, x3, x4, x5) INT: (
+    INT k := in k;
+    PROC b = INT: a(k -:= 1, b, x1, x2, x3, x4);
+    (k <= 0 | x4 + x5 | b)
+  );
+  print(a(7, INT: 1, INT: -1, INT: -1, INT: 1, INT: 0))
+)

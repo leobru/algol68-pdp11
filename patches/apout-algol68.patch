@@ -1,0 +1,93 @@
+--- a/aout.c
++++ b/aout.c
+@@ -262,6 +262,8 @@
+     if ((zin = fopen(file, "r")) == NULL)	/* Open the file */
+         return (-1);
+ 
++    guest_emt_handler = 0;
++    for (i = 544; i < 548; i++) itab[i] = emt;
+     Binary = load_aout_header(zin, &e);	/* Determine a.out & Unix type */
+ 
+     if (e.a_magic == ANY_SCRIPT) {	/* Shell script, run that */
+--- a/cpu.c
++++ b/cpu.c
+@@ -209,8 +209,35 @@
+     exit(EXIT_FAILURE);
+ }
+ 
++unsigned short guest_emt_handler;
++
++void guest_rti(void)
++{
++    unsigned short pc, ps;
++    ll_word(regs[SP], pc);
++    regs[SP] += 2;
++    ll_word(regs[SP], ps);
++    regs[SP] += 2;
++    regs[PC] = pc;
++    CC_N = !!(ps & 010); CC_Z = !!(ps & 04);
++    CC_V = !!(ps & 02); CC_C = !!(ps & 01);
++}
++
+ void emt()
+ {
++    if (guest_emt_handler > 1) {
++        unsigned short handler = guest_emt_handler;
++        unsigned short ps = (CC_N << 3) | (CC_Z << 2) | (CC_V << 1) | CC_C;
++        guest_emt_handler = 0; /* V7 signals are reset on delivery. */
++        regs[SP] -= 2;
++        sl_word(regs[SP], ps);
++        regs[SP] -= 2;
++        sl_word(regs[SP], regs[PC]);
++        regs[PC] = handler;
++        return;
++    }
++    if (guest_emt_handler == 1) return;
++
+     TrapDebug((stderr, "Apout - pid %d emt instruction at PC 0%o\n",
+                (int) getpid(), regs[PC]));
+     exit(EXIT_FAILURE);
+--- a/defines.h
++++ b/defines.h
+@@ -512,6 +512,8 @@
+ void waiti P((void));
+ void halt P((void));
+ void iot P((void));
++extern unsigned short guest_emt_handler;
++void guest_rti(void);
+ void emt P((void));
+ void bpt P((void));
+ void fis P((void));
+--- a/itab.c
++++ b/itab.c
+@@ -7,7 +7,7 @@
+ #include "defines.h"
+ 
+ static _itab sitab0[64] = {
+-    halt, waiti, illegal, bpt, iot, illegal, illegal, illegal,
++    halt, waiti, guest_rti, bpt, iot, illegal, illegal, illegal,
+     illegal, illegal, illegal, illegal, illegal, illegal, illegal, illegal,
+     illegal, illegal, illegal, illegal, illegal, illegal, illegal, illegal,
+     illegal, illegal, illegal, illegal, illegal, illegal, illegal, illegal,
+--- a/v7trap.c
++++ b/v7trap.c
+@@ -603,6 +603,7 @@
+ 
+     if (i == -1) {
+         SET_CC_C();
++        regs[0] = errno;
+         TrapDebug((dbg_file, "errno is %s\n", strerror(errno)));
+     } else {
+         CLR_CC_C();
+@@ -804,6 +805,11 @@
+ /* Where possible, deal with signals */
+ static int v7signal(int sig, int val)
+ {
++    if (sig == 7) {
++        int previous = guest_emt_handler;
++        guest_emt_handler = val;
++        return previous;
++    }
+     if (sig > V7_NSIG) {
+         errno = EINVAL;
+         return (-1);
